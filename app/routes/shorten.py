@@ -1,25 +1,37 @@
-from fastapi import APIRouter
-from app.schemas import ShortenURLRequest, ShortenURLResponse
-from app.services.short_code import generate_short_code
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+import string
+import random
 from app.database import SessionLocal
 from app.models import URL
 
 router = APIRouter(prefix="/api/v1")
 
-@router.post("/shorten", response_model=ShortenURLResponse)
-def shorten_url(request: ShortenURLRequest):
+class URLRequest(BaseModel):
+    long_url: str
+
+def generate_short_code(length=6):
+    """Generate a random short code."""
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+@router.post("/shorten")
+def create_short_url(request: URLRequest):
     db = SessionLocal()
 
-    short_code = generate_short_code()
+    # Ensure unique short code
+    while True:
+        code = generate_short_code()
+        existing = db.query(URL).filter(URL.short_code == code).first()
+        if not existing:
+            break
 
-    url = URL(
-        long_url=request.long_url,
-        short_code=short_code
-    )
-
-    db.add(url)
+    new_url = URL(long_url=request.long_url, short_code=code)
+    db.add(new_url)
     db.commit()
+    db.refresh(new_url)
     db.close()
 
-    short_url = f"http://localhost:8000/{short_code}"
-    return ShortenURLResponse(short_url=short_url)
+    # Construct the live short URL (use your deployed Railway domain)
+    short_url = f"https://url-shortener-production-4c07.up.railway.app/{new_url.short_code}"
+
+    return {"short_url": short_url}
