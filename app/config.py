@@ -1,8 +1,7 @@
 import os
 
-BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+# PostgreSQL database URL from Railway environment variables
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://user:password@localhost:5432/url_shortener"
-)
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
