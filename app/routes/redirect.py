@@ -7,9 +7,6 @@ router = APIRouter()
 
 @router.get("/{short_code}")
 def redirect_url(short_code: str):
-    if not SessionLocal:
-        raise HTTPException(status_code=500, detail="Database not available")
-
     db = SessionLocal()
     url = db.query(URL).filter(URL.short_code == short_code).first()
     db.close()
