@@ -1,3 +1,4 @@
+from app.routes.redirect import router as redirect_router
 from fastapi import FastAPI
 from app.routes.shorten import router as shorten_router
 from app.database import Base, engine
